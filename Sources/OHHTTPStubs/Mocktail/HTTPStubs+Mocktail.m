@@ -72,6 +72,9 @@ NSString* const MocktailErrorDomain = @"Mocktail";
         return nil;
     }
 
+    // Load in reverse order, as HTTPStubs will process the mocks in reverse order
+    fileURLs = [[fileURLs reverseObjectEnumerator] allObjects];
+    
     //stub the Mocktail-formatted requests
     NSMutableArray *descriptorArray = [[NSMutableArray alloc] initWithCapacity:fileURLs.count];
     for (NSURL *fileURL in fileURLs)
