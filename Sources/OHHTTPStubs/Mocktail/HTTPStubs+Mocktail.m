@@ -32,7 +32,7 @@ NSString* const MocktailErrorDomain = @"Mocktail";
 @implementation HTTPStubs (Mocktail)
 
 
-+(NSArray *)stubRequestsUsingMocktailsAtPath:(NSString *)path inBundle:(nullable NSBundle*)bundleOrNil error:(NSError **)error
++(NSArray *)stubRequestsUsingMocktailsAtPath:(NSString *)path inBundle:(nullable NSBundle*)bundleOrNil error:(NSError **)error removeAfterUse:(BOOL)removeAfterUse
 {
     NSURL *dirURL = [bundleOrNil?:[NSBundle bundleForClass:self.class] URLForResource:path withExtension:nil];
     if (!dirURL)
@@ -80,7 +80,7 @@ NSString* const MocktailErrorDomain = @"Mocktail";
         {
             continue;
         }
-        id<HTTPStubsDescriptor> descriptor = [[self class] stubRequestsUsingMocktail:fileURL error: &bError];
+        id<HTTPStubsDescriptor> descriptor = [[self class] stubRequestsUsingMocktail:fileURL error: &bError removeAfterUse:removeAfterUse];
         if (descriptor && !bError)
         {
             [descriptorArray addObject:descriptor];
@@ -90,7 +90,7 @@ NSString* const MocktailErrorDomain = @"Mocktail";
     return descriptorArray;
 }
 
-+(id<HTTPStubsDescriptor>)stubRequestsUsingMocktailNamed:(NSString *)fileName inBundle:(nullable NSBundle*)bundleOrNil error:(NSError **)error
++(id<HTTPStubsDescriptor>)stubRequestsUsingMocktailNamed:(NSString *)fileName inBundle:(nullable NSBundle*)bundleOrNil error:(NSError **)error removeAfterUse:(BOOL)removeAfterUse
 {
     NSURL *responseURL = [bundleOrNil?:[NSBundle bundleForClass:self.class] URLForResource:fileName withExtension:@"tail"];
 
@@ -104,11 +104,11 @@ NSString* const MocktailErrorDomain = @"Mocktail";
     }
     else
     {
-        return [[self class] stubRequestsUsingMocktail:responseURL error:error];
+        return [[self class] stubRequestsUsingMocktail:responseURL error:error removeAfterUse:removeAfterUse];
     }
 }
 
-+(id<HTTPStubsDescriptor>)stubRequestsUsingMocktail:(NSURL *)fileURL error:(NSError **)error
++(id<HTTPStubsDescriptor>)stubRequestsUsingMocktail:(NSURL *)fileURL error:(NSError **)error removeAfterUse:(BOOL)removeAfterUse
 {
     NSError *bError = nil;
     NSStringEncoding originalEncoding;
@@ -220,7 +220,7 @@ NSString* const MocktailErrorDomain = @"Mocktail";
     // Handle binary which is base64 encoded
     NSUInteger bodyOffset = [headerMatter dataUsingEncoding:NSUTF8StringEncoding].length + 2;
 
-    return [HTTPStubs stubRequestsPassingTest:^BOOL(NSURLRequest *request) {
+    __weak __block id<HTTPStubsDescriptor> stub = [HTTPStubs stubRequestsPassingTest:^BOOL(NSURLRequest *request) {
         NSString *absoluteURL = (request.URL).absoluteString;
         NSString *method = request.HTTPMethod;
 
@@ -234,6 +234,10 @@ NSString* const MocktailErrorDomain = @"Mocktail";
 
         return NO;
     } withStubResponse:^HTTPStubsResponse*(NSURLRequest *request) {
+        if (removeAfterUse) {
+            // Remove the stub, allowing the next one to occur
+            [HTTPStubs removeStub:stub];
+        }
         if([headers[@"Content-Type"] hasSuffix:@";base64"])
         {
             NSString *type = headers[@"Content-Type"];
@@ -255,6 +259,7 @@ NSString* const MocktailErrorDomain = @"Mocktail";
             return response;
         }
     }];
+    return stub;
 }
 
 @end
