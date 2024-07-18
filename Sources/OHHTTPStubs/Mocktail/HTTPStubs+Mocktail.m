@@ -72,7 +72,10 @@ NSString* const MocktailErrorDomain = @"Mocktail";
         return nil;
     }
 
-    // Load in reverse order, as HTTPStubs will process the mocks in reverse order
+    // Load in reverse alphabetical order, as HTTPStubs will process the mocks in reverse order
+    fileURLs = [fileURLs sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+        return [[obj1 lastPathComponent] localizedCaseInsensitiveCompare:[obj2 lastPathComponent]];
+    }];
     fileURLs = [[fileURLs reverseObjectEnumerator] allObjects];
     
     //stub the Mocktail-formatted requests
