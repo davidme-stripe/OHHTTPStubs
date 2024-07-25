@@ -92,7 +92,7 @@ NSString* const MocktailErrorDomain = @"Mocktail";
             [descriptorArray addObject:descriptor];
         }
     }
-
+    
     return descriptorArray;
 }
 
@@ -234,6 +234,7 @@ NSString* const MocktailErrorDomain = @"Mocktail";
         {
             if ([methodRegex numberOfMatchesInString:method options:0 range:NSMakeRange(0, method.length)] > 0)
             {
+                NSLog(@"HTTPStubs: Request %@ %@ matched stub regexes: %@ %@ from file %@", method, absoluteURL, methodRegex.pattern, absoluteURLRegex.pattern, fileURL.lastPathComponent);
                 return YES;
             }
         }
@@ -265,6 +266,8 @@ NSString* const MocktailErrorDomain = @"Mocktail";
             return response;
         }
     }];
+    
+    NSLog(@"Loaded stub: %@", fileURL.lastPathComponent);
     return stub;
 }
 
