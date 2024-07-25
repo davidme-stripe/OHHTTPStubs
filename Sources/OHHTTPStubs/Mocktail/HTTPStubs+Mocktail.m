@@ -234,13 +234,13 @@ NSString* const MocktailErrorDomain = @"Mocktail";
         {
             if ([methodRegex numberOfMatchesInString:method options:0 range:NSMakeRange(0, method.length)] > 0)
             {
-                NSLog(@"HTTPStubs: Request %@ %@ matched stub regexes: %@ %@ from file %@", method, absoluteURL, methodRegex.pattern, absoluteURLRegex.pattern, fileURL.lastPathComponent);
                 return YES;
             }
         }
 
         return NO;
     } withStubResponse:^HTTPStubsResponse*(NSURLRequest *request) {
+        NSLog(@"HTTPStubs: Request %@ %@ matched stub regexes: %@ %@ from file %@", request.HTTPMethod, request.URL.absoluteString, methodRegex.pattern, absoluteURLRegex.pattern, fileURL.lastPathComponent);
         if (removeAfterUse) {
             // Remove the stub, allowing the next one to occur
             [HTTPStubs removeStub:stub];
