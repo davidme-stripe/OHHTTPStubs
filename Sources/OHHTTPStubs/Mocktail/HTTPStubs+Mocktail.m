@@ -229,11 +229,20 @@ NSString* const MocktailErrorDomain = @"Mocktail";
     __weak __block id<HTTPStubsDescriptor> stub = [HTTPStubs stubRequestsPassingTest:^BOOL(NSURLRequest *request) {
         NSString *absoluteURL = (request.URL).absoluteString;
         NSString *method = request.HTTPMethod;
-
+    
         if ([absoluteURLRegex numberOfMatchesInString:absoluteURL options:0 range:NSMakeRange(0, absoluteURL.length)] > 0)
         {
             if ([methodRegex numberOfMatchesInString:method options:0 range:NSMakeRange(0, method.length)] > 0)
             {
+                // If it has a special Stripe Mock header (used to confirm POST params), make sure that matches
+                NSString *expectedMockRequestHeader = headers[@"X-Stripe-Mock-Request"];
+                if (expectedMockRequestHeader != nil && [expectedMockRequestHeader length] > 0) {
+                    NSString *mockRequestHeader = [request valueForHTTPHeaderField:@"X-Stripe-Mock-Request"];
+                    if (mockRequestHeader == nil || ![mockRequestHeader isEqualToString:expectedMockRequestHeader]) {
+                        return NO;
+                    }
+                }
+
                 return YES;
             }
         }
