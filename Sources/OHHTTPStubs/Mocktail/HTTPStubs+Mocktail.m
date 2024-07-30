@@ -238,7 +238,25 @@ NSString* const MocktailErrorDomain = @"Mocktail";
                 NSString *expectedMockRequestHeader = headers[@"X-Stripe-Mock-Request"];
                 if (expectedMockRequestHeader != nil && [expectedMockRequestHeader length] > 0) {
                     NSString *mockRequestHeader = [request valueForHTTPHeaderField:@"X-Stripe-Mock-Request"];
-                    if (mockRequestHeader == nil || ![mockRequestHeader isEqualToString:expectedMockRequestHeader]) {
+                    // If it's missing entirely, the mock should fail
+                    if (mockRequestHeader == nil) {
+                        return NO;
+                    }
+                    
+                    // Read in the regex to confirm the body data matches
+                    NSError *bError = nil;
+                    NSError *error = nil;
+                    NSRegularExpression *stripeMockRequestRegex = [NSRegularExpression regularExpressionWithPattern:expectedMockRequestHeader options:NSRegularExpressionCaseInsensitive error:&bError];
+
+                    if (bError)
+                    {
+                        if (error)
+                        {
+                            NSLog(@"File '%@' has invalid URL regular expression pattern: %@.", fileURL.absoluteString, lines[1]);
+                        }
+                        return NO;
+                    }
+                    if ([stripeMockRequestRegex numberOfMatchesInString:mockRequestHeader options:0 range:NSMakeRange(0, [mockRequestHeader length])] == 0) {
                         return NO;
                     }
                 }
